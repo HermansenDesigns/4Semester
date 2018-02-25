@@ -64,6 +64,12 @@ namespace StockMarket
 
     public class Portfolio : IObserver
     {
+        public Portfolio(PortfolioDisplay portfolioDisplay)
+        {
+            PortfolioDisplay = portfolioDisplay ?? throw new ArgumentNullException(nameof(portfolioDisplay));
+        }
+
+        public PortfolioDisplay PortfolioDisplay { get; set; }
         public Dictionary<Stock, int> Stocks { get; private set; } = new Dictionary<Stock, int>();
 
         public void AddStock(Stock stock, int amount)
@@ -120,26 +126,50 @@ namespace StockMarket
 
         public void ValueChanged(ISubject value)
         {
-            Console.WriteLine($"Value has changed: {((Stock)value).Name} | {((Stock)value).Value}");
+            Console.WriteLine("Value");
+            Console.WriteLine($"- {((Stock)value).Name} changed to {((Stock)value).Value}\n");
+
+            PortfolioDisplay.PrintInformation(this);
         }
 
         #endregion
 
     }
 
+    public class PortfolioDisplay
+    {
+        public void PrintInformation(Portfolio portfolio)
+        {
+            Console.WriteLine("Displaying current portfolio...");
+
+            Console.WriteLine($"{nameof(portfolio)} has {portfolio.Total} in total stock value");
+            Console.WriteLine($"List of Stock");
+            Console.WriteLine("--------------------------------------");
+            Console.WriteLine("|  Name  | Value | Amount |  Total   |");
+            Console.WriteLine("--------------------------------------");
+            foreach (var stock in portfolio.Stocks)
+            {
+                Console.WriteLine($"| {stock.Key.Name} |  {stock.Key.Value}   |   {stock.Value}   |   {stock.Value * stock.Key.Value}   |");
+                Console.WriteLine("--------------------------------------");
+
+            }
+        }
+    }
+
     class Program
     {
         static void Main(string[] args)
         {
-            var myPortfolio = new Portfolio();
-            var hisPortfolio = new Portfolio();
+            var pd = new PortfolioDisplay();
+            var myPortfolio = new Portfolio(pd);
+            var hisPortfolio = new Portfolio(pd);
 
             var googleStock = new Stock("Google" , 200M);
             var vestasStock = new Stock("Vestas", 45M);
 
             myPortfolio.AddStock(googleStock, 50);
-            myPortfolio.AddStock(vestasStock, 100);
-            hisPortfolio.AddStock(googleStock, 10);
+            myPortfolio.AddStock(vestasStock, 95);
+            hisPortfolio.AddStock(googleStock, 20);
 
             googleStock.Value = 55M;
             vestasStock.Value = 20M;
