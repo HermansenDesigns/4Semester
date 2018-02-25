@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -63,6 +64,57 @@ namespace StockMarket
 
     public class Portfolio : IObserver
     {
+        public Dictionary<Stock, int> Stocks { get; private set; } = new Dictionary<Stock, int>();
+
+        public void AddStock(Stock stock, int amount)
+        {
+            if (amount <= 0)
+                throw new ArgumentException("amount has to be greater than 0");
+
+            if (!Stocks.ContainsKey(stock))
+            {
+                Stocks.Add(stock, amount);
+                stock.Register(this);
+                Console.WriteLine($"{stock.Name} has added to the portfolio");
+            }
+            else
+            {
+                Stocks[stock] += amount;
+                Console.WriteLine($"{amount} has been added to {stock.Name}");
+
+            }
+        }
+
+        public void RemoveStock(Stock stock, int amount)
+        {
+            if (amount <= 0)
+                throw new ArgumentException("amount has to be greater than 0");
+
+            if (Stocks.ContainsKey(stock))
+            {
+                if (amount >= Stocks[stock])
+                {
+                    Stocks.Remove(stock);
+                    stock.Unregister(this);
+                    Console.WriteLine($"{stock.Name} has been removed from portfolio");
+                }
+                else
+                {
+                    Stocks[stock] -= amount;
+                    Console.WriteLine($"{amount} has been removed from {stock.Name}");
+
+                }
+            }
+            else
+            {
+                Console.WriteLine($"{stock.Name} is not a part of portfolio");
+            }
+        }
+
+        public decimal Total
+        {
+            get { return Stocks.Sum(o => o.Value * o.Key.Value); }
+        }
 
         #region IObserver Members
 
@@ -80,14 +132,20 @@ namespace StockMarket
         static void Main(string[] args)
         {
             var myPortfolio = new Portfolio();
-            var googleStock = new Stock("Google" ,200M);
+            var hisPortfolio = new Portfolio();
+
+            var googleStock = new Stock("Google" , 200M);
             var vestasStock = new Stock("Vestas", 45M);
 
-            googleStock.Register(myPortfolio);
-            vestasStock.Register(myPortfolio);
+            myPortfolio.AddStock(googleStock, 50);
+            myPortfolio.AddStock(vestasStock, 100);
+            hisPortfolio.AddStock(googleStock, 10);
 
             googleStock.Value = 55M;
             vestasStock.Value = 20M;
+
+            Console.WriteLine($"{nameof(myPortfolio)} has {myPortfolio.Total} value");
+            Console.WriteLine($"{nameof(hisPortfolio)} has {hisPortfolio.Total} value");
         }
     }
 }
